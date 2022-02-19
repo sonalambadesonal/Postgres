@@ -103,3 +103,54 @@ GROUP BY
 	)
 HAVING GROUPING(brand) = 0 AND GROUPING(segment) != 0
 ORDER BY brand; 
+
+-- ROLLUP Clause
+
+SELECT brand, segment, SUM(quantity)
+FROM sales
+GROUP BY
+	ROLLUP (brand, segment)
+ORDER BY brand, segment;
+
+SELECT segment, brand, SUM(quantity)
+FROM sales
+GROUP BY
+	ROLLUP (segment, brand)
+ORDER BY segment, brand;
+
+SELECT segment, brand, SUM(quantity)
+FROM sales
+GROUP BY segment,
+	ROLLUP (brand)
+ORDER BY segment, brand;
+
+-- rental_date = yyyy/mm/dd
+SELECT EXTRACT(YEAR FROM rental_date) y,
+	EXTRACT(MONTH FROM rental_date) m,
+	EXTRACT(DAY FROM rental_date) d,
+	COUNT(rental_id)
+FROM rental
+GROUP BY
+	ROLLUP( EXTRACT(YEAR FROM rental_date),
+	EXTRACT(MONTH FROM rental_date),
+	EXTRACT(DAY FROM rental_date)
+	);
+	
+-- CUBE Clause
+
+SELECT brand, segment, SUM(quantity)
+FROM sales
+GROUP BY 
+	CUBE (brand, segment)
+ORDER BY brand, segment;
+
+SELECT EXTRACT(YEAR FROM rental_date) y,
+	EXTRACT(MONTH FROM rental_date) m,
+	EXTRACT(DAY FROM rental_date) d,
+	COUNT(rental_id)
+FROM rental
+GROUP BY
+	CUBE( EXTRACT(YEAR FROM rental_date),
+	EXTRACT(MONTH FROM rental_date),
+	EXTRACT(DAY FROM rental_date)
+	);
