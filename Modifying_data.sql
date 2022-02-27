@@ -161,5 +161,72 @@ RETURNING *;
 
 DELETE FROM links;
 
+-- DELETE JOIN
 
+DROP TABLE IF EXISTS contacts;
+CREATE TABLE contacts(
+	contact_id SERIAL PRIMARY KEY,
+	first_name VARCHAR(50) NOT NULL,
+	last_name VARCHAR(50) NOT NULL,
+	phone VARCHAR(15) NOT NULL	
+);
+
+DROP TABLE IF EXISTS blacklist;
+CREATE TABLE blacklist(
+	phone VARCHAR(15) PRIMARY KEY
+);
+
+INSERT INTO contacts(first_name,last_name,phone)
+VALUES('John','Doe','(408)-523-9874'),
+       ('Jane','Doe','(408)-511-9876'),
+       ('Lily','Bush','(408)-124-9221');
+	   
+INSERT INTO blacklist(phone)
+VALUES('(408)-523-9874'),
+       ('(408)-511-9876');
+	   
+DELETE FROM contacts con
+USING blacklist bl
+WHERE con.phone = bl.phone;
+
+SELECT * FROM contacts;
+
+DELETE FROM contacts
+WHERE phone IN(SELECT phone FROM blacklist);
+
+-- UPSERT
+
+DROP TABLE IF EXISTS customers;
+CREATE TABLE customers(
+	customer_id SERIAL PRIMARY KEY,
+	name VARCHAR UNIQUE,
+	email VARCHAR NOT NULL,
+	active BOOL NOT NULL DEFAULT TRUE
+);
+
+INSERT INTO customers(name, email)
+VALUES('IBM', 'contact@ibm.com'),
+    ('Microsoft', 'contact@microsoft.com'),
+    ('Intel', 'contact@intel.com');
+	
+SELECT * FROM customers;
+
+UPDATE customers
+SET email = 'contact@microsoft.com'
+WHERE customer_id = 2;
+
+INSERT INTO customers(name, email)
+VALUES('Microsoft','hotline@microsoft.com')
+ON CONFLICT ON CONSTRAINT customers_name_key
+DO NOTHING;
+
+INSERT INTO customers(name, email)
+VALUES('Microsoft','hotline@microsoft.com')
+ON CONFLICT (name)
+DO NOTHING;
+
+INSERT INTO customers(name, email)
+VALUES('Microsoft','hotline@microsoft.com')
+ON CONFLICT (name)
+DO UPDATE SET email = EXCLUDED.email || ';' || customers.email;
 	
