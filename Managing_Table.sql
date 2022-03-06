@@ -81,3 +81,7 @@ VALUES(DEFAULT, 'APPLE');
 SELECT * FROM fruits;
 
 SELECT currval(pg_get_serial_sequence('fruits', 'id'));
+
+INSERT INTO fruits(name)
+VALUES('Grapes')
+RETURNING id;
