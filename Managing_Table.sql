@@ -277,3 +277,197 @@ INNER JOIN supplier_groups g ON g.id = s.group_id;
 
 ALTER TABLE supplier_groups RENAME TO groups;
 
+--ADD COLUMN: Add One Or More Columns To a Table
+
+DROP TABLE IF EXISTS customers1 CASCADE;
+CREATE TABLE customers1(
+	id SERIAL PRIMARY KEY,
+	customer_name VARCHAR NOT NULL
+);
+
+ALTER TABLE customers1
+ADD COLUMN phone VARCHAR;
+
+ALTER TABLE customers1
+ADD COLUMN fax VARCHAR,
+ADD COLUMN email VARCHAR;
+
+INSERT INTO customers1(customer_name)
+VALUES ('Apple'),
+		('Samsung'),
+		('Sony');
+		
+SELECT * FROM customers1;
+
+ALTER TABLE customers1
+ADD COLUMN contact_name VARCHAR NOT NULL;
+
+ALTER TABLE customers1
+ADD COLUMN contact_name VARCHAR;
+
+UPDATE customers1
+SET contact_name = 'John'
+WHERE id = 1;
+
+UPDATE customers1
+SET contact_name = 'Mary'
+WHERE id = 2;
+
+UPDATE customers1
+SET contact_name = 'Lily'
+WHERE id = 3;
+
+ALTER TABLE customers1
+ALTER COLUMN contact_name SET NOT NULL;
+
+--DROP COLUMN: Remove One or More Columns of a Table
+CREATE TABLE publishers(
+	publisher_id SERIAL PRIMARY KEY,
+	name VARCHAR NOT NULL
+);
+
+CREATE TABLE categories1(
+	category_id SERIAL PRIMARY KEY,
+	NAME VARCHAR NOT NULL
+);
+
+CREATE TABLE books(
+	book_id SERIAL PRIMARY KEY,
+	title VARCHAR NOT NULL,
+	isbn VARCHAR NOT NULL,
+	published_date DATE NOT NULL,
+	description VARCHAR,
+	category_id INT NOT NULL,
+	publisher_id INT NOT NULL,
+	FOREIGN KEY (publisher_id) REFERENCES publishers(publisher_id),
+	FOREIGN KEY (category_id) REFERENCES categories(category_id)
+
+);
+
+CREATE VIEW book_info
+AS SELECT book_id,
+	title,
+	isbn,
+	published_date,
+	name
+FROM books b INNER JOIN publishers USING (publisher_id)
+ORDER BY title;
+
+ALTER TABLE books
+DROP COLUMN category_id;
+
+ALTER TABLE books
+DROP COLUMN publisher_id;
+
+ALTER TABLE books
+DROP COLUMN publisher_id CASCADE;
+
+ALTER TABLE books
+DROP COLUMN isbn,
+DROP COLUMN description;
+
+--Change Column Type: Step-by-Step Examples
+CREATE TABLE assets(
+	id SERIAL PRIMARY KEY,
+	name TEXT NOT NULL,
+	asset_no VARCHAR NOT NULL,
+	description TEXT,
+	location TEXT,
+	acquired_date DATE NOT NULL
+);
+
+INSERT INTO assets(name,asset_no,location,acquired_date)
+VALUES('Server','10001','Server room','2017-01-01'),
+      ('UPS','10002','Server room','2017-01-01');
+	  
+ALTER TABLE assets
+ALTER COLUMN name TYPE VARCHAR;
+
+ALTER TABLE assets
+ALTER COLUMN description TYPE VARCHAR,
+ALTER COLUMN location TYPE VARCHAR;
+
+ALTER TABLE assets
+ALTER COLUMN asset_no TYPE INT;
+
+ALTER TABLE assets
+ALTER COLUMN asset_no TYPE INT
+USING asset_no::INTEGER;
+
+--RENAME COLUMN: Renaming a column
+
+CREATE TABLE customer_groups(
+	id SERIAL PRIMARY KEY,
+	name VARCHAR NOT NULL
+);
+
+CREATE TABLE customers2(
+	id SERIAL PRIMARY KEY,
+	name VARCHAR NOT NULL,
+	phone VARCHAR NOT NULL,
+	email VARCHAR,
+	group_id INT,
+	FOREIGN KEY (group_id) REFERENCES customer_groups (id)
+);
+
+CREATE VIEW customer_date
+AS SELECT
+	c.id,
+	c.name,
+	g.name customer_group
+FROM customers2 c
+INNER JOIN customer_groups g ON g.id = c.group_id;
+
+ALTER TABLE customers2
+RENAME COLUMN email TO customer_email;
+
+ALTER TABLE customer_groups
+RENAME COLUMN name TO group_name;
+
+ALTER TABLE customers2
+RENAME COLUMN name TO customer_name;
+
+ALTER TABLE customers2
+RENAME COLUMN phone TO contact_phone;
+
+--DROP TABLE
+
+DROP TABLE authors;
+DROP TABLE IF EXISTS author;
+
+CREATE TABLE authors(
+	author_id INT PRIMARY KEY,
+	first_name VARCHAR(50),
+	last_name VARCHAR(50)
+);
+
+CREATE TABLE pages(
+	page_id SERIAL PRIMARY KEY,
+	title VARCHAR (255) NOT NULL,
+	contents TEXT,
+	author_id INT NOT NULL,
+	FOREIGN KEY (author_id)
+	REFERENCES authors (author_id)
+);
+
+DROP TABLE IF EXISTS authors;
+DROP TABLE IF EXISTS authors CASCADE;
+
+CREATE TABLE tvshows(
+	tvshow_id INT GENERATED ALWAYS AS IDENTITY,
+	title VARCHAR,
+	release_year SMALLINT,
+	PRIMARY KEY (tvshow_id)
+);
+
+CREATE TABLE animes(
+	anime_id INT GENERATED ALWAYS AS IDENTITY,
+	title VARCHAR,
+	release_year SMALLINT,
+	PRIMARY KEY (anime_id)
+);
+
+DROP TABLE tvshows, animes;
+
+
+
