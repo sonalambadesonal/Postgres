@@ -469,5 +469,22 @@ CREATE TABLE animes(
 
 DROP TABLE tvshows, animes;
 
+--Copy A TABLE
 
+CREATE TABLE copycontacts(
+	id SERIAL PRIMARY KEY,
+	first_name VARCHAR NOT NULL,
+	last_name VARCHAR NOT NULL,
+	email VARCHAR NOT NULL UNIQUE
+);
 
+INSERT INTO copycontacts(first_name, last_name, email)
+VALUES('John','Doe','john.doe@postgresqltutorial.com'),
+      ('David','William','david.william@postgresqltutorial.com');
+	  
+CREATE TABLE copycontacts_backup
+AS TABLE copycontacts;
+
+SELECT * FROM copycontacts_backup;
+ALTER TABLE copycontacts_backup ADD PRIMARY KEY(id);
+ALTER TABLE copycontacts_backup ADD UNIQUE(email);
