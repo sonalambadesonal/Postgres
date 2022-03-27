@@ -330,3 +330,195 @@ WHERE '(408)-589-5555' = ANY(phones);
 
 SELECT name,unnest(phones)
 FROM contacts_array;
+
+--hstore
+CREATE EXTENSION hstore;
+
+CREATE TABLE books_hstore(
+	id SERIAL PRIMARY KEY,
+	title VARCHAR(255),
+	attr hstore
+);
+
+INSERT INTO books_hstore(title, attr)
+VALUES(
+	'PostgreSQL Tutorial',
+	'"paperback" => "243",
+	"publisher" => "postgresqltutorial.com",
+	"language" => "english",
+	"ISBN-13" => "978-1449370000",
+	"weight" => "11.2 ounces"'
+);
+
+INSERT INTO books_hstore(title, attr)
+VALUES(
+	'PostgreSQL cheat sheet',
+	'"paperback" => "5",
+	"publisher" => "postgresqltutorial.com",
+	"language" => "English",
+	"ISBN-13" => "978-1449370001",
+	"weight" => "1 ounces"'
+);
+
+SELECT attr FROM books_hstore;
+
+SELECT attr -> 'ISBN-13' AS isbn
+FROM books_hstore;
+
+SELECT title, attr -> 'weight' AS weight
+FROM books_hstore
+WHERE attr -> 'ISBN-13' = '978-1449370000';
+
+UPDATE books_hstore
+SET attr = attr || '"freeshipping" => "yes"' ::hstore;
+
+SELECT * FROM books_hstore;
+
+UPDATE books_hstore
+SET attr = attr || '"freeshipping" => "no"' ::hstore;
+
+UPDATE books_hstore
+SET attr = delete(attr, 'freeshipping');
+
+SELECT title, attr -> 'publisher' AS publisher, attr
+FROM books_hstore
+WHERE attr ? 'publisher';
+
+SELECT title
+FROM books_hstore
+WHERE attr @> '"weight" => "11.2 ounces"' :: hstore;
+
+SELECT title
+FROM books_hstore
+WHERE attr ?& ARRAY['language', 'weight'];
+
+SELECT title
+FROM books_hstore
+WHERE attr ?| ARRAY['xyz', 'weight'];
+
+SELECT akeys(attr)
+FROM books_hstore;
+
+SELECT skeys(attr)
+FROM books_hstore;
+
+SELECT avals(attr)
+FROM books_hstore;
+
+SELECT svals(attr)
+FROM books_hstore;
+
+SELECT title, hstore_to_json(attr) AS json
+FROM books_hstore;
+
+SELECT title, (EACH(attr)).*
+FROM books_hstore;
+
+--JSON
+
+CREATE TABLE orders(
+	id SERIAL NOT NULL PRIMARY KEY,
+	info json NOT NULL
+);
+
+INSERT INTO orders(info)
+VALUES('{"customer": "John Doe", "items": {"product": "Beer", "qty": 6}}');
+
+INSERT INTO orders(info)
+VALUES('{"customer": "Lily Bush", "items":{"product": "Diaper", "qty":24}}'),
+	('{"customer": "Josh William", "items":{"product": "Toy Car", "qty":1}}'),
+	('{"customer":"Mary Clark", "items":{"product": "Toy Train", "qty": 2}}');
+	
+SELECT info FROM orders;
+
+SELECT info -> 'customer' AS customer
+FROM orders;
+
+SELECT info ->> 'customer' AS customers
+FROM orders;
+
+SELECT info ->'items' AS items
+FROM orders;
+
+SELECT info ->'items' ->>'product' AS product
+FROM orders;
+
+SELECT info ->> 'customer' AS customer
+FROM orders
+WHERE info -> 'items' ->> 'product' = 'Diaper';
+
+SELECT info ->> 'customer' AS customer,
+	info -> 'items' ->> 'product' AS product
+FROM orders
+WHERE CAST(info -> 'items' ->> 'qty' AS INTEGER) = 2;
+
+SELECT MIN(CAST(info -> 'items' ->> 'qty' AS INTEGER)),
+	MAX(CAST(info -> 'items' ->> 'qty' AS INTEGER)),
+	SUM(CAST(info -> 'items' ->> 'qty' AS INTEGER)),
+	AVG(CAST(info -> 'items' ->> 'qty' AS INTEGER))
+FROM orders;
+
+SELECT json_each(info)
+FROM orders;
+
+SELECT json_each_text(info)
+FROM orders;
+
+SELECT json_object_keys (info->'items')
+FROM orders;
+
+SELECT json_typeof(info->'items')
+FROM orders;
+
+SELECT json_typeof(info->'items'->'qty')
+FROM orders;
+
+--User-defined Data Types
+
+CREATE TABLE mailing_list(
+	id SERIAL PRIMARY KEY,
+	first_name VARCHAR NOT NULL,
+	last_name VARCHAR NOT NULL,
+	email VARCHAR NOT NULL,
+	CHECK(first_name !~ '\s' AND last_name !~ '\s')
+);
+
+CREATE DOMAIN contact_name AS 
+	VARCHAR NOT NULL CHECK(value !~ '\s');
+	
+DROP TABLE IF EXISTS mailing_list;
+
+CREATE TABLE mailing_list(
+	id SERIAL PRIMARY KEY,
+	first_name contact_name,
+	last_name contact_name,
+	email VARCHAR NOT NULL
+);
+
+INSERT INTO mailing_list(first_name, last_name, email)
+VALUES('Jame','Doe','jame.doe@example.com');
+
+SELECT typname
+FROM pg_catalog.pg_type JOIN pg_catalog.pg_namespace ON pg_namespace.oid = pg_type.typnamespace
+WHERE typtype = 'd' and nspname = 'public';
+
+CREATE TYPE film_summary AS (
+	film_id INT,
+	title VARCHAR,
+	release_year SMALLINT
+);
+
+CREATE OR REPLACE FUNCTION get_film_summary(f_id INT)
+	RETURNS film_summary AS
+$$
+SELECT film_id,
+	title,
+	release_year
+FROM film
+WHERE film_id = f_id;
+$$
+LANGUAGE SQL;
+
+SELECT * FROM get_film_summary(40);
+
+SELECT film_id, title, release_year FROM film WHERE film_id = 40;
