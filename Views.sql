@@ -88,4 +88,48 @@ DROP VIEW film_master
 CASCADE;
 
 DROP VIEW film_length_stat, film_category_stat;
-	
+
+--Creating PostgreSQL Updatable Views
+
+CREATE VIEW usa_cities AS
+SELECT city, country_id
+FROM city
+WHERE country_id = 103;
+
+SELECT * FROM usa_cities;
+
+INSERT INTO usa_cities(city, country_id)
+VALUES('San Jose', 103);
+
+SELECT * FROM city
+WHERE country_id = 103
+ORDER BY last_update DESC;
+
+DELETE 
+FROM usa_cities
+WHERE city = 'San Jose';
+
+-- Materialized Views
+
+CREATE MATERIALIZED VIEW rental_by_category
+AS
+SELECT c.name AS category,
+	SUM(p.amount) AS total_sales
+FROM(((((payment p 
+			 JOIN rental r  ON ((p.rental_id = r.rental_id)))
+			 JOIN inventory i ON ((r.inventory_id = i.inventory_id)))
+		   	 JOIN film f ON ((i.film_id = f.film_id)))
+		  	 JOIN film_category fc ON ((f.film_id = fc.film_id)))
+		 	 JOIN category c ON ((fc.category_id = c.category_id)))
+GROUP BY  c.name
+ORDER BY SUM(p.amount) DESC
+WITH NO DATA;
+
+SELECT * FROM rental_by_category;
+		
+REFRESH MATERIALIZED VIEW rental_by_category;
+
+CREATE UNIQUE INDEX rental_category ON rental_by_category(category);
+
+REFRESH MATERIALIZED VIEW CONCURRENTLY rental_by_category;
+
