@@ -133,3 +133,80 @@ CREATE UNIQUE INDEX rental_category ON rental_by_category(category);
 
 REFRESH MATERIALIZED VIEW CONCURRENTLY rental_by_category;
 
+--Creating Updatable Views Using the WITH CHECK OPTION Clause
+
+INSERT INTO usa_city(city, country_id)
+VALUES('Birmingham', 102);
+
+INSERT  INTO usa_cities(city, country_id)
+VALUES('Cambridge', 102);
+
+SELECT * FROM usa_cities;
+
+CREATE OR REPLACE VIEW usa_city AS
+SELECT city_id, city, country_id
+FROM city
+WHERE country_id =  103
+ORDER BY city WITH CHECK OPTION;
+
+UPDATE usa_city
+SET country_id = 102
+WHERE city_id = 135;
+
+CREATE VIEW city_a AS
+SELECT city_id, city, country_id
+FROM city
+WHERE city LIKE 'A%';
+
+SELECT * FROM city_a;
+
+CREATE OR REPLACE VIEW city_a_usa AS
+SELECT city_id, city, country_id
+FROM city_a
+WHERE country_id = 103
+WITH CASCADED CHECK OPTION;
+
+SELECT * FROM city_a_usa;
+
+INSERT INTO city_a_usa(city, country_id)
+VALUES('Houston', 103);
+
+CREATE OR REPLACE VIEW city_a_usa AS
+SELECT city_id, city, country_id
+FROM city_a
+WHERE country_id = 103
+WITH LOCAL CHECK OPTION;
+
+INSERT INTO city_a_usa(city, country_id)
+VALUES ('Houston', 103);
+
+--Recursive View
+
+WITH RECURSIVE reporting_line AS (
+SELECT employee_id, full_name AS subordinates
+FROM employees
+WHERE manager_id IS NULL
+UNION ALL
+	SELECT
+		e.employee_id,
+		(
+			rl.subordinates || '>' || e.full_name
+		) AS subordinates
+	FROM employees e
+	INNER JOIN reporting_line rl  ON e.manager_id = rl.employee_id
+) SELECT employee_id, subordinates
+FROM reporting_line
+ORDER BY employee_id;
+
+CREATE RECURSIVE VIEW reporting_line(employee_id, subordinates) AS
+SELECT employee_id, full_name AS subordinates
+FROM employees
+WHERE manager_id IS NULL
+UNION ALL 
+	SELECT e.employee_id,
+			(
+				rl.subordinates || '>' || e.full_name
+			)AS subordinates
+			
+	FROM employees e
+	INNER JOIN reporting_line rl ON e.manager_id = rl.employee_id;
