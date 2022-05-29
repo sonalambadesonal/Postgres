@@ -121,6 +121,91 @@ begin
 	raise notice 'Counter value in Outer block is %', counter;
 end outer_block $$;
 
+-- Select into
+do $$
+declare
+	actor_count integer;
+begin
+	-- select the number of actores from the actor table
+	select count(*)
+	into actor_count
+	from actor;
+	
+	--show the number of actors
+	raise notice 'The number of actors: %', actor_count;
+end; $$
+
+-- Row Types
+
+do $$
+declare
+	selected_actor actor%rowtype;
+begin
+	--select actor with id 10
+	select *
+	from actor
+	into selected_actor
+	where actor_id = 10;
+	
+	--Show the number of actor
+	raise notice 'The actor name is % %', selected_actor.first_name, selected_actor.last_name;
+end; $$
+
+-- Record Types
+do $$
+declare
+	rec record;
+begin
+	select film_id, title, length
+	from film
+	into rec
+	where film_id = 200;
+	
+	raise notice '% % %', rec.film_id, rec.title, rec.length;
+end; $$
+language plpgsql;
+
+do $$
+declare
+	rec record;
+begin
+	for rec in select title, length
+				from film
+				where length > 50
+				order by length
+	loop
+		
+		raise notice '% (%)', rec.title, rec.length;
+	
+	end loop;
+end; $$
+
+-- Constants
+do $$
+declare
+	vat constant numeric := 0.1;
+	net_price numeric := 20.5;
+begin
+	raise notice 'The selling price is %', net_price * (1 + vat);
+end $$;
+
+do $$
+declare
+	vat constant numeric := 0.1;
+	net_price numeric := 20.5;
+begin
+	raise notice 'The selling price is %', net_price * (1 + vat);
+	vat := 0.5;
+end $$;
+
+do $$
+declare
+	start_at constant time := now();
+begin
+	raise notice 'Start excuting block at %', start_at;
+end $$;
+
+
 
 
 
