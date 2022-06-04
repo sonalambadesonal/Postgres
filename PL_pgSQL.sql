@@ -205,7 +205,117 @@ begin
 	raise notice 'Start excuting block at %', start_at;
 end $$;
 
+-- Errors And Messages
 
+do $$
+begin
+	raise info 'information message %', now();
+	raise log 'log message %', now();
+	raise debug 'debug message %', now();
+	raise warning 'warning message %', now();
+	raise notice 'notice message %', now();
+end $$;
+
+do $$
+declare
+	email varchar(255) := 'info@postgressqltutorial.com';
+begin
+	raise exception 'duplicate email: %', email using hint = 'check the email again';
+end $$
+
+do $$
+begin
+	raise sqlstate '2201B';
+end $$;
+
+do $$
+begin
+	raise invalid_regular_expression;
+end $$
+
+-- Assert Statement
+
+do $$
+declare
+	film_count integer;
+begin
+	select count(*)
+	from film
+	into film_count;
+	
+	assert film_count > 0, 'Film not found, check the film table';
+end $$;
+
+do $$
+declare
+	film_count integer;
+begin
+	select count(*)
+	into film_count
+	from film;
+	
+	assert film_count > 1000, '1000 film found, check the film table';
+end $$;
+
+-- If Statment
+
+do $$
+declare
+	selected_film film%rowtype;
+	input_film_id film.film_id%type := 0;
+begin
+	select * from film
+	into selected_film 
+	where film_id = input_film_id;
+	
+	if not found then
+		raise notice 'the film % could not be found', input_film_id;
+	end if;
+end $$;
+
+do $$
+declare
+	selected_film film%rowtype;
+	input_film_id film.film_id%type := 100;
+begin
+	select * from film
+	into selected_film
+	where film_id = input_film_id;
+	
+	if not found then
+		raise notice 'the film % could not be found', input_film_id;
+	else 
+		raise notice 'the film % is found', selected_film.title;
+	end if;
+end $$;
+
+do $$
+declare
+	v_film film%rowtype;
+	len_description varchar(100);
+begin
+	select * from film
+	into v_film
+	where film_id = 100;
+	
+	if not found then
+		raise notice 'Film not Found';
+	else
+		if v_film.length >0 and v_film.length <= 50 then
+			len_description := 'Short';
+		elseif v_film.length > 50 and v_film.length <= 120 then
+			len_description := 'Medium';
+		elseif v_film.length > 120 then
+			len_description := 'Long';
+		else
+			len_description := 'N/A';
+		end if;
+		
+		raise notice 'The % film is %', v_film.title, len_description;
+		
+	end if;
+	
+end $$;
 
 
 
