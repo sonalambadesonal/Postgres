@@ -317,6 +317,83 @@ begin
 	
 end $$;
 
+-- Case Statement
+
+do $$
+declare
+	rate film.rental_rate%type;
+	price_segment varchar(50);
+begin
+	select rental_rate into rate
+	from film
+	where film_id = 100;
+	
+		-- assign the price segment
+		if found then
+			case rate
+				when 0.99 then
+				price_segment = 'Mass';
+				when 2.99 then
+				price_segment = 'Mainstream';
+				when 4.99 then
+				price_segment = 'High End';
+				else
+				price_segment = 'Unspecified';
+			end case;
+			raise notice '%',price_segment;
+		end if;
+end $$;
+
+--Searched case statement
+
+do $$
+declare
+	total_payment numeric;
+	service_level varchar(25);
+begin
+	select sum(amount) into total_payment
+	from payment
+	where customer_id = 100;
+	
+	if found then
+		case
+			when total_payment > 200 then
+			service_level = 'Platinum';
+			when total_payment > 100 then
+			service_level = 'Gold';
+			else
+				service_level = 'Silver';
+		end case;
+		raise notice 'Service Level: %', service_level;
+	else
+		raise notice 'Customer not found';
+	end if;
+end $$;
+	
+--Loop Statement
+
+do $$
+declare
+	n integer := 10;
+	fib integer := 0;
+	counter integer := 0;
+	i integer := 0;
+	j integer := 1;
+begin
+	if (n > 1) then
+		fib := 0;
+	end if;
+	loop
+		exit when counter = n;
+		counter := counter + 1;
+		raise notice '% %', i,j;
+		select j, i+j into i, j;
+	end loop;
+	fib := i;
+	raise notice '%', fib;
+end $$;
+
+
 
 
 
