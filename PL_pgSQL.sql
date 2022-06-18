@@ -553,6 +553,100 @@ begin
 end $$;
 
 
+-- User-defined functions
+
+-- create function
+
+create function get_film_count(len_from int, len_to int)
+returns int
+language plpgsql
+as
+$$
+declare
+	film_count integer;
+begin
+	select count(*)
+	from film
+	into film_count
+	where length between len_from and len_to;
+	
+	return film_count;
+end $$;
+	
+select get_film_count(40, 90);
+
+select get_film_count(len_from => 40, len_to => 90);
+
+select get_film_count(40, len_to => 90);
+
+select get_film_count(len_from => 40, 90);
+
+
+-- Function Parameter Modes: IN, OUT, INOUT
+
+create or replace function find_film_by_id(p_film_id int)
+returns varchar
+language plpgsql
+as $$
+declare
+	film_title film.title%type;
+begin
+	select title
+	into film_title
+	from film
+	where film_id = p_film_id;
+	
+	if not found then
+		raise 'Film with id % not found', p_film_id;
+	end if;
+	
+	return film_title;
+	
+end $$;
+
+select * from film;
+
+select find_film_by_id(133);
+
+
+---------
+
+create or replace function get_film_stat(
+	out min_len int,
+	out max_len int,
+	out avg_len numeric)
+language plpgsql
+as $$
+begin
+	select min(length),
+			max(length),
+			avg(length):: numeric(5,1)
+	into min_len, max_len, avg_len
+	from film;
+end $$;
+
+select get_film_stat();
+
+select * from get_film_stat();
+
+----
+
+create or replace function swap(
+	inout x int,
+	inout y int
+)
+language plpgsql
+as $$
+begin
+	select x,y into y,x;
+end $$;
+
+select swap(10,20);
+
+
+	
+
+
 
 
 
