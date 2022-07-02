@@ -711,9 +711,107 @@ begin
 end $$;
 
 select get_rental_duration(232,'2005-07-01');
+
+-------------------------------------------------
+
+--Function That Returns a Table
+
+create or replace function get_film (
+	p_pattern varchar
+)
+
+returns table (
+	film_title varchar,
+	film_release_year int
+)
+
+language plpgsql
+as $$
+begin
+	return query
+		select title, release_year::integer
+		from film
+		where title ilike p_pattern;
+end $$;
+
+select get_film('aL%');
 	
+DROP FUNCTION get_film(p_pattern varchar);
+
+select * from get_film('Al%');
+
+-- Function overloading example.
+
+create or replace function get_film(
+	p_pattern varchar,
+	p_year int
+)
+returns table (
+	film_title varchar,
+	film_release_year int
+)
+language plpgsql
+as $$
+declare
+	var_r record;
+begin 
+	for var_r in(
+		select title, release_year
+		from film
+		where title ilike p_pattern and release_year = p_year
+	)loop film_title := upper(var_r.title);
+		film_release_year := var_r.release_year;
+	return next;
+	end loop;
+end $$;
+
+select * from get_film('AL%', 2006);
+
+----------------------------------------------
+
+-- Drop Function
+
+create or replace function get_film_actors()
+	returns setof record
+as $$
+declare
+	rec record;
+begin
+	for rec in select film_id, title,
+			(first_name || '' || last_name)::varchar
+			from film
+			inner join film_actor using(film_id)
+			inner join actor using(actor_id)
+			order by title
+	loop
+	return next  rec;
+	end loop;
+end; $$
+language plpgsql;
 
 
+create or replace function get_film_actors(p_film_id int)
+	returns setof record
+as $$
+declare
+	rec record;
+begin
+	for rec in select film_id, title,
+	  		(first_name || '' || last_name)::varchar
+			from film
+			inner join film_actor using(film_id)
+			inner join actor using(actor_id)
+			where film_id =p_film_id
+			order by title
+	loop
+	return next rec;
+	end loop;
+end; $$
+language plpgsql;
+
+drop function get_film_actors;
+
+drop function get_film_actors();
 
 
 
