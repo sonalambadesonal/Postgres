@@ -956,6 +956,105 @@ select * from accounts;
 
 call transfer(2,1,100);
 	
+--PostgreSQL Drop Procedure
+
+create or replace procedure insert_actor(
+	fname varchar,
+	lname varchar
+)
+language plpgsql
+as $$
+begin
+	insert into actor(first_name,last_name)
+	values(fname, lname);
+end $$;
+
+select * from actor
+where first_name = 'xyz';
+
+call insert_actor('xyz', 'xyz');
+
+create or replace procedure insert_actor(
+	full_name varchar
+)
+language plpgsql
+as $$
+declare
+	fname varchar;
+	lname varchar;
+begin
+	-- split the full name into first and last name
+	select 
+		split_part(full_name, ' ', 1),
+		split_part(full_name, ' ', 2)
+	into fname, lname;
+	-- insert first and last name into the actor table
+	insert into actor(first_name, last_name)
+	values(fname,lname);
+end $$;
+
+call insert_actor('John1 Doe1');
+
+select * from actor
+where first_name = 'John1';
+
+--The following stored procedure deletes an actor by id:
+
+create or replace procedure delete_actor(
+	p_actor_id int
+)
+language plpgsql
+as $$
+begin
+	delete from actor
+	where actor_id = p_actor_id;
+end $$;
+
+call delete_actor(202);
+
+--the following stored procedure updates the first name and last name of an actor:
+
+create or replace procedure update_actor(
+	p_actor_id int,
+	fname varchar,
+	lname varchar
+)
+language plpgsql
+as $$
+begin
+	update actor
+	set first_name = fname,
+		last_name = lname
+	where actor_id = p_actor_id;
+end $$;
+
+call update_actor(201, 'John1', 'Doe1');
+
+select * from actor
+where actor_id = 201;
+
+drop procedure insert_actor;
+
+drop procedure insert_actor(varchar);
+
+drop procedure delete_actor, update_actor;
+
+--------------------------------------------------
+
+--PL/pgSQL Cursor
+
+declare 
+	cur_films cursor for select *
+			from film;
+	cur_films2 cursor (year integer) for
+			select * from film
+			where release_year = year;
+			
+open my_cursor for
+	select * from city
+	where country = p_country;
+	
+
 	
 
 
