@@ -1054,8 +1054,96 @@ open my_cursor for
 	select * from city
 	where country = p_country;
 	
+-----------------------------------------------------
 
+create or replace function get_film_titles(p_year integer)
+	returns text as $$
+declare
+	titles text default '';
+	rec_film record;
+	cur_films cursor(p_year integer)
+		for select title, release_year
+		from film
+		where release_year = p_year;
+begin
+	--open cursor
+	open cur_films(p_year);
 	
+	loop
+	-- fetch row into the film
+	fetch cur_films into rec_film;
+	-- exit when no more row to fetch
+	exit when not found;
+	
+	--build the output
+	if rec_film.title like '%ful%' then
+		titles := titles || ',' || rec_film.title || ',' || rec_film.release_year;
+	end if;
+	end loop;
+	
+	-- close the cursor
+	close cur_films;
+	
+	return titles;
+end; $$
+language plpgsql;
+
+select get_film_titles(2006);
+
+----------------------------------------
+--Trigger Examples.
+
+--CREATE TRIGGER example
+
+DROP TABLE IF EXISTS employees;
+
+CREATE TABLE employees(
+	id INT GENERATED ALWAYS AS IDENTITY,
+	first_name VARCHAR(40) NOT NULL,
+	last_name VARCHAR(40) NOT NULL,
+	PRIMARY KEY(id)
+);
+
+CREATE TABLE employee_audits(
+	id INT GENERATED ALWAYS AS IDENTITY,
+	employee_id INT NOT NULL,
+	last_name VARCHAR(40) NOT NULL,
+	changed_on TIMESTAMP(6) NOT NULL
+);
+
+create or replace function log_last_name_changes()
+RETURNS TRIGGER
+language plpgsql
+as $$
+begin
+	if NEW.last_name <> OLD.last_name then
+		insert into employee_audits(employee_id,last_name,changed_on)
+		values(OLD.id,OLD.last_name, now());
+	end if;
+	
+	return NEW;
+end $$;
+
+
+create trigger last_name_changes
+	before update
+	on employees
+	for each row
+	execute procedure log_last_name_changes();
+
+INSERT INTO employees(first_name,last_name)
+VALUES('John', 'Doe');
+
+INSERT INTO employees(first_name, last_name)
+VALUES('Lily', 'Bush');
+
+SELECT * FROM employees;
+
+UPDATE employees
+SET last_name = 'Browne'
+WHERE id = 2;
+
+SELECT * FROM employee_audits;
 
 
 
