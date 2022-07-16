@@ -1145,6 +1145,95 @@ WHERE id = 2;
 
 SELECT * FROM employee_audits;
 
+-----------------------------------
+--Drop Trigger
+
+create function check_staff_user()
+	returns trigger
+as $$
+begin
+	if length(NEW.username) < 8 or NEW.username is null then
+		raise exception 'The username can not be less than 8 characters';
+		
+	end if;
+	if NEW.username is null then
+		raise exception 'Username cannot be NULL';
+	end if;
+	return NEW;
+end; $$
+language plpgsql;
+
+
+CREATE TRIGGER username_check
+	BEFORE insert or update
+ON staff
+FOR each row
+	execute procedure check_staff_user(); 
+	
+DROP TRIGGER username_check
+ON staff;
+
+----------------------------
+-- Alter Trigger Example
+
+DROP  TABLE IF EXISTS employees;
+
+CREATE TABLE employees(
+	employee_id INT GENERATED ALWAYS AS IDENTITY,
+	first_name VARCHAR(50) NOT NULL,
+	last_name VARCHAR(50) NOT NULL,
+	salary decimal(11,2) NOT NULL DEFAULT 0,
+	PRIMARY KEY(employee_id)
+);
+
+CREATE OR REPLACE FUNCTION check_salary()
+	RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+	IF(NEW.salary -  OLD.salary) / OLD.salary >= 1 THEN
+		RAISE 'The salary increment cannot that high.';
+	END IF;
+	RETURN NEW;
+END $$;
+
+CREATE TRIGGER before_update_salary
+	BEFORE UPDATE
+ON employees
+FOR EACH ROW
+EXECUTE PROCEDURE check_salary();
+
+INSERT INTO employees(first_name,last_name,salary)
+VALUES('John', 'Doe', 100000);
+
+UPDATE employees
+SET salary = 200000
+WHERE employee_id = 1;
+
+ALTER TRIGGER before_update_salary
+ON employees
+RENAME TO salary_before_update;
+
+--------------------------------------------
+--Disable Triggers
+
+ALTER TABLE employees
+DISABLE TRIGGER log_last_name_changes;
+
+ALTER TABLE employees
+DISABLE TRIGGER ALL;
+
+--Enable Triggers
+ALTER TABLE employees
+ENABLE TRIGGER salary_before_update;
+
+ALTER TABLE employees
+ENABLE TRIGGER ALL;
+
+
+
+
+
 
 
 
